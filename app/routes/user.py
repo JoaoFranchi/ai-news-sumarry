@@ -1,5 +1,4 @@
 from uuid import UUID
-import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -7,18 +6,11 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin, UserResponse
+from app.schemas.user import UserCreate, UserLogin, UserResponse, LoginResponse
+from app.services.auth import create_access_token, get_password_hash, verify_password
+from app.services.auth_dependencies import get_current_user
 
 router = APIRouter()
-
-
-def get_password_hash(password: str) -> str:
-    hashed_bytes = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-    return hashed_bytes.decode("utf-8")
-
-
-def verify_password(plain_password: str, password_hash: str) -> bool:
-    return bcrypt.checkpw(plain_password.encode("utf-8"), password_hash.encode("utf-8"))
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -44,14 +36,22 @@ def register(user_create: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-@router.post("/login")
+@router.post("/login", response_model=LoginResponse)
 def login(user_login: UserLogin, db: Session = Depends(get_db)):
     """Authenticate a user using email and password."""
     user = db.scalar(select(User).filter_by(email=user_login.email))
     if not user or not verify_password(user_login.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    return {"message": "Login successful", "user_id": user.id}
+    token = create_access_token(subject=str(user.id))
+    return {
+        "message": "Login successful",
+        "user_id": user.id,
+        "token": {
+            "access_token": token,
+            "token_type": "bearer",
+        },
+    }
 
 
 @router.get("/users/{user_id}", response_model=UserResponse)
@@ -61,3 +61,9 @@ def get_user(user_id: UUID, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
+
+
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    """Return the currently authenticated user profile."""
+    return current_user

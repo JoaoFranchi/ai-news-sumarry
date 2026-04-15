@@ -12,8 +12,12 @@ router = APIRouter()
 @router.post("/summarize", response_model=SummarizeResponse)
 def summarize_article(request: SummarizeRequest, db: Session = Depends(get_db)):
     """Generate a summary and key points for the provided article text."""
+    article_text = (request.article_text or request.text or "").strip()
+    if not article_text:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Text to summarize must not be empty.")
+
     try:
-        ai_result = summarize_text(request.text)
+        ai_result = summarize_text(article_text, request.length)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:

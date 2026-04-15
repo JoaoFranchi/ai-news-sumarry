@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
@@ -12,4 +12,4 @@ class User(Base):
     name = Column(String(length=120), nullable=False)
     email = Column(String(length=255), unique=True, nullable=False, index=True)
     password_hash = Column(String(length=255), nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))

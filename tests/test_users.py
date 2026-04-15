@@ -28,6 +28,30 @@ def test_duplicate_email_registration(client):
     assert duplicate_response.json()["detail"] == "Email already registered"
 
 
+def test_register_name_too_long(client):
+    payload = {
+        "name": "A" * 21,
+        "email": "longname@example.com",
+        "password": "Secret123!"
+    }
+
+    response = client.post("/register", json=payload)
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Name must be at most 20 characters long"
+
+
+def test_register_password_too_short(client):
+    payload = {
+        "name": "Short Password",
+        "email": "shortpass@example.com",
+        "password": "1234567"
+    }
+
+    response = client.post("/register", json=payload)
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Password must be at least 8 characters long"
+
+
 def test_login_success(client):
     register_payload = {
         "name": "Login User",
@@ -40,8 +64,12 @@ def test_login_success(client):
     login_response = client.post("/login", json=login_payload)
 
     assert login_response.status_code == 200
-    assert login_response.json()["message"] == "Login successful"
-    assert "user_id" in login_response.json()
+    data = login_response.json()
+    assert data["message"] == "Login successful"
+    assert "user_id" in data
+    assert "token" in data
+    assert data["token"]["token_type"] == "bearer"
+    assert data["token"]["access_token"]
 
 
 def test_login_wrong_password(client):
@@ -57,3 +85,27 @@ def test_login_wrong_password(client):
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid credentials"
+
+
+def test_get_me_requires_auth(client):
+    response = client.get("/me")
+    assert response.status_code == 401
+
+
+def test_get_me_success(client):
+    register_payload = {
+        "name": "Me User",
+        "email": "me@example.com",
+        "password": "Secret123!"
+    }
+    client.post("/register", json=register_payload)
+
+    login_response = client.post(
+        "/login",
+        json={"email": register_payload["email"], "password": register_payload["password"]}
+    )
+    token = login_response.json()["token"]["access_token"]
+
+    me_response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+    assert me_response.status_code == 200
+    assert me_response.json()["email"] == register_payload["email"]
