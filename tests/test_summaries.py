@@ -100,4 +100,5 @@ def test_summarize_rejects_invalid_length(client):
 
     response = client.post("/summarize", json=payload)
 
-    assert response.status_code == 422
+    assert response.status_code == 400
+    assert response.json()["detail"] == "length must be one of: short, medium, long"

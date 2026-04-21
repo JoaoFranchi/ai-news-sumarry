@@ -13,9 +13,9 @@ MIN_SUMMARIZABLE_WORDS = 30
 SHORT_ARTICLE_MESSAGE = "Article too short to summarize effectively"
 VALID_SUMMARY_LENGTHS = {"short", "medium", "long"}
 SUMMARY_PROMPTS = {
-    "short": "Summarize this news article in 1-2 concise sentences.",
-    "medium": "Summarize this news article in 3-4 clear and informative sentences.",
-    "long": "Provide a detailed summary of this news article in 5-7 sentences, explaining key events and context.",
+    "short": "Summarize this news article in 1-2 concise sentences. Be direct and focus only on the main point.",
+    "medium": "Summarize this news article in 3-4 clear and informative sentences. Include key details.",
+    "long": "Provide a detailed summary of this news article in 5-7 sentences, explaining key events, context, and significance.",
 }
 SUMMARY_SENTENCE_LIMITS = {"short": 2, "medium": 4, "long": 7}
 KEY_POINT_LIMITS = {"short": 2, "medium": 4, "long": 5}

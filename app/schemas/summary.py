@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Literal
+from typing import List, Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -24,7 +24,7 @@ class SummarizeRequest(BaseModel):
         json_schema_extra={"example": "Full article text to summarize."},
     )
     article_id: Optional[UUID] = Field(None, json_schema_extra={"example": "a3f8f9c0-9d24-4b6a-8d75-a8f9b1234d56"})
-    length: Literal["short", "medium", "long"] = Field("medium", json_schema_extra={"example": "medium"})
+    length: Optional[str] = Field("medium", json_schema_extra={"example": "medium"})
 
 
 class SummarizeResponse(BaseModel):
